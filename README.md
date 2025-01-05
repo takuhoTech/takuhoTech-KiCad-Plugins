@@ -10,3 +10,5 @@ takuhoTech's KiCad Plugins
 ![SquareTrackGenerator](https://github.com/user-attachments/assets/77c7218f-fd4f-4bf6-9bed-bb141d6037d3)
 
 KiCad 8.0で動作を確認済みです
+
+バグがあったら適当に直して使ってください

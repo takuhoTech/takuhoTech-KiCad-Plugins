@@ -79,6 +79,7 @@ class SquareTrackAction(pcbnew.ActionPlugin):
                     chain.Append(center.x+int((radius-width/2)*math.cos(math.radians(t/10))),center.y+int((radius-width/2)*math.sin(math.radians(t/10))))
                 for t in range(angle_start + angle_disp, angle_start - numpy.sign(angle_disp), -numpy.sign(angle_disp)):
                     chain.Append(center.x+int((radius+width/2)*math.cos(math.radians(t/10))),center.y+int((radius+width/2)*math.sin(math.radians(t/10))))
+                #Python3環境ではint/int=float
 
             chain.SetClosed(True)
             polySet = pcbnew.SHAPE_POLY_SET()

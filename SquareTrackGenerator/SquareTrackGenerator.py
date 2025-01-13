@@ -1,6 +1,7 @@
 import pcbnew
 import os
 import math
+import numpy
 
 class SquareTrackAction(pcbnew.ActionPlugin):
     def defaults(self):
@@ -19,9 +20,7 @@ class SquareTrackAction(pcbnew.ActionPlugin):
             if track.IsSelected():
                 selectedTracks.append(track)
 
-        length = len(selectedTracks)
-
-        for i in range(length):
+        for i in range(len(selectedTracks)):
             start = selectedTracks[i].GetStart()
             end = selectedTracks[i].GetEnd()
             width = selectedTracks[i].GetWidth()
@@ -54,34 +53,35 @@ class SquareTrackAction(pcbnew.ActionPlugin):
             rect.SetNet(net)#ネット設定
             board.Add(rect)
             '''
-            #座標計算
-            sin = -(end.y - start.y)/length#y軸の正方向が上か下かで符号が変わる？
-            cos = (end.x - start.x)/length
-            dx = int((width/2)*sin)
-            dy = int((width/2)*cos)
-
-            X1 = start.x - dx
-            X2 = start.x + dx
-            X3 = end.x + dx
-            X4 = end.x - dx
-
-            Y1 = start.y - dy#下向きが正
-            Y2 = start.y + dy
-            Y3 = end.y + dy
-            Y4 = end.y - dy
-
-            pts = [
-                (X1,Y1),
-                (X2,Y2),
-                (X3,Y3),
-                (X4,Y4)
-            ]
-            #ポリゴン生成
-            polySet = pcbnew.SHAPE_POLY_SET()
+            #ポリゴン座標
             chain = pcbnew.SHAPE_LINE_CHAIN()
-            for (x,y) in pts:
-                chain.Append(x, y)
+
+            if selectedTracks[i].GetClass() == 'PCB_TRACK':
+                sin = -(end.y - start.y)/length#y軸の正方向が上か下かで符号が変わる？
+                cos = (end.x - start.x)/length
+                dx = int((width/2)*sin)
+                dy = int((width/2)*cos)
+
+                chain.Append(start.x - dx, start.y - dy)
+                chain.Append(start.x + dx, start.y + dy)
+                chain.Append(end.x   + dx, end.y   + dy)
+                chain.Append(end.x   - dx, end.y   - dy)
+
+            elif selectedTracks[i].GetClass() == 'PCB_ARC':
+                center      = selectedTracks[i].GetCenter() #回転中心
+                radius      = selectedTracks[i].GetRadius() #半径
+                angle_disp  = int(selectedTracks[i].GetAngle().AsDegrees()*10)
+                angle_start = int(selectedTracks[i].GetArcAngleStart().AsDegrees()*10)
+                #angle_end   = selectedTracks[i].GetArcAngleEnd().AsDegrees()
+
+                #1度ずつ打つ処理にすると開始点と終点の角度が整数でないとき精度を保つ処理が面倒なので1/10度ずつ点を打つ
+                for t in range(angle_start, angle_start + angle_disp + numpy.sign(angle_disp), numpy.sign(angle_disp)):
+                    chain.Append(center.x+int((radius-width/2)*math.cos(math.radians(t/10))),center.y+int((radius-width/2)*math.sin(math.radians(t/10))))
+                for t in range(angle_start + angle_disp, angle_start - numpy.sign(angle_disp), -numpy.sign(angle_disp)):
+                    chain.Append(center.x+int((radius+width/2)*math.cos(math.radians(t/10))),center.y+int((radius+width/2)*math.sin(math.radians(t/10))))
+
             chain.SetClosed(True)
+            polySet = pcbnew.SHAPE_POLY_SET()
             polySet.AddOutline(chain)
 
             poly = pcbnew.PCB_SHAPE(board, pcbnew.SHAPE_T_POLY)

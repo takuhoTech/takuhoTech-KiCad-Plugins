@@ -18,10 +18,10 @@ def CreateVia(brd, x, y, diameter, drill, net = "GND", isFree = True, viaType = 
 
 class ViaFenceAction(pcbnew.ActionPlugin):
     def defaults(self):
-        self.name = "ViaFenceGenerator by takuhoTech"
+        self.name = "Via Fence Generator"
         self.category = "Modify PCB"
         self.description = "Add via fence to selected tracks"
-        self.icon_file_name = os.path.join(os.path.dirname(__file__), "ViaFenceGenerator.png")
+        self.icon_file_name = os.path.join(os.path.dirname(__file__), "./32x32.png")
         self.show_toolbar_button = True
 
     def Run(self):
@@ -35,13 +35,10 @@ class ViaFenceAction(pcbnew.ActionPlugin):
             TrackEnd = selectedTracks[i].GetEnd()
             TrackWidth = selectedTracks[i].GetWidth()
             TrackLength = selectedTracks[i].GetLength()
-            #レイヤー情報は不要
-            #配置するビアのネットとサイズとレイヤーペアはひとまず固定
+            #配線のレイヤー情報は不要
             TrackClearance = pcbnew.FromMM(0.2)
             ViaDiameter = pcbnew.FromMM(0.6)
             ViaDrill    = pcbnew.FromMM(0.3)
-            #ビアとネットを自動的に更新にチェックが入ってる
-            #アニュラリングがすべての導体レイヤーに作られるようになってる
 
             offset = TrackWidth//2 + ViaDiameter//2 + TrackClearance #python3においては//で切り捨て除算
 
@@ -100,5 +97,3 @@ class ViaFenceAction(pcbnew.ActionPlugin):
                     CreateVia(board, TrackCenter.x + int(OuterRadius*math.cos(angle_temp)), TrackCenter.y + int(OuterRadius*math.sin(angle_temp)), ViaDiameter, ViaDrill)
 
         pcbnew.Refresh()
-
-ViaFenceAction().register()

@@ -5,10 +5,10 @@ import numpy
 
 class SquareTrackAction(pcbnew.ActionPlugin):
     def defaults(self):
-        self.name = "SquareTrackGenerator by takuhoTech"
+        self.name = "Square Track Generator"
         self.category = "Modify PCB"
         self.description = "Change selected tracks to square-ended"
-        self.icon_file_name = os.path.join(os.path.dirname(__file__), "SquareTrackGenerator.png")
+        self.icon_file_name = os.path.join(os.path.dirname(__file__), "./32x32.png")
         self.show_toolbar_button = True
 
     def Run(self):
@@ -26,38 +26,18 @@ class SquareTrackAction(pcbnew.ActionPlugin):
             width = selectedTracks[i].GetWidth()
             length = selectedTracks[i].GetLength()
 
-            layer = selectedTracks[i].GetLayer()#レイヤーを取得
+            layer = selectedTracks[i].GetLayer() #レイヤーを取得
             #layer = board.GetLayerID(selectedTracks[i].GetLayerName())#レイヤーを取得（別解）
             #layer = selectedTracks[i].GetLayerSet()#謎
-            net = selectedTracks[i].GetNet()#ネットを取得
+            net = selectedTracks[i].GetNet() #ネットを取得
 
-            board.Remove(selectedTracks[i])#元の配線を削除
+            board.Remove(selectedTracks[i]) #元の配線を削除
 
-            #矩形生成（斜めにできないため没）
-            '''
-            rect = pcbnew.PCB_SHAPE(board)
-            rect.SetShape(pcbnew.SHAPE_T_RECTANGLE)
-
-            X1 = start.x
-            Y1 = int(start.y - width/2)
-            X2 = end.x
-            Y2 = int(end.y + width/2)
-
-            rect.SetStart(pcbnew.VECTOR2I(X1,Y1))
-            rect.SetEnd(pcbnew.VECTOR2I(X2,Y2))
-
-            rect.SetWidth(0)
-            rect.SetFilled(True)
-
-            rect.SetLayer(layer)# layer設定
-            rect.SetNet(net)#ネット設定
-            board.Add(rect)
-            '''
             #ポリゴン座標
             chain = pcbnew.SHAPE_LINE_CHAIN()
 
             if selectedTracks[i].GetClass() == 'PCB_TRACK':
-                sin = -(end.y - start.y)/length#y軸の正方向が上か下かで符号が変わる？
+                sin = -(end.y - start.y)/length #y軸の正方向が上か下かで符号が変わる？
                 cos = (end.x - start.x)/length
                 dx = int((width/2)*sin)
                 dy = int((width/2)*cos)
@@ -90,10 +70,8 @@ class SquareTrackAction(pcbnew.ActionPlugin):
             poly.SetWidth(0)
             poly.SetFilled(True)
 
-            poly.SetLayer(layer)# layer設定
-            poly.SetNet(net)#ネット設定
+            poly.SetLayer(layer) #layer設定
+            poly.SetNet(net) #ネット設定
             board.Add(poly)
 
         pcbnew.Refresh()
-
-SquareTrackAction().register()

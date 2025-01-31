@@ -1,0 +1,36 @@
+{
+    "$schema": "https://go.kicad.org/pcm/schemas/v1",
+    "name": "takuhoTech-KiCad-Plugins",
+    "description": "A suite of kicad pcbnew Tools",
+    "description_full": "Square Track Generator, Via Fence Generator",
+    "identifier": "com.github.takuhotech.takuhotech-kicad-plugins",
+    "type": "plugin",
+    "author": {
+        "name": "takuhoTech",
+        "contact": {
+            "email": "takuho.tech@gmail.com"
+        }
+    },
+    "license": "MIT",
+    "resources": {
+        "Github": "https://github.com/takuhoTech/takuhoTech-KiCad-Plugins",
+        "Readme": "https://github.com/takuhoTech/takuhoTech-KiCad-Plugins/blob/main/README.md"
+    },
+    "tags": [
+        "pcbnew",
+        "rf",
+        "track",
+        "fencing"
+    ],
+    "versions": [
+        {
+            "version": "0.1.0",
+            "status": "development",
+            "kicad_version": "8.0",
+            "download_url": "https://github.com/takuhoTech/takuhoTech-KiCad-Plugins",
+            "platforms": [
+                "windows"
+            ]
+        }
+    ]
+}

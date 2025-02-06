@@ -14,11 +14,7 @@ class SquareTrackAction(pcbnew.ActionPlugin):
     def Run(self):
         board = pcbnew.GetBoard()
 
-        selectedTracks = []
-
-        for track in board.GetTracks():
-            if track.IsSelected():
-                selectedTracks.append(track)
+        selectedTracks = [track for track in board.GetTracks() if track.IsSelected()]
 
         for i in range(len(selectedTracks)):
             start = selectedTracks[i].GetStart()
@@ -26,7 +22,7 @@ class SquareTrackAction(pcbnew.ActionPlugin):
             width = selectedTracks[i].GetWidth()
             length = selectedTracks[i].GetLength()
 
-            layer = selectedTracks[i].GetLayer() #レイヤーを取得
+            layer = selectedTracks[i].GetLayer() #レイヤーIDを取得
             #layer = board.GetLayerID(selectedTracks[i].GetLayerName())#レイヤーを取得（別解）
             #layer = selectedTracks[i].GetLayerSet()#謎
             net = selectedTracks[i].GetNet() #ネットを取得

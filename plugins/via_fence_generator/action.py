@@ -29,10 +29,9 @@ class ViaFenceAction(pcbnew.ActionPlugin):
         via.SetRemoveUnconnected(removeUnconnectedAnnularRing) #True=始点,終点,および接続されたレイヤー False=すべての導体レイヤー
         brd.Add(via)
 
-    def AppendPosition(self, pos_list, pos): #座標リストに座標を追加する関数 リストの座標のいずれかと距離がごく近いものは追加されない 円弧と直線の接続部にビアが重なって生成されるのを防ぐ
-        for pos_stored in pos_list:
-            if math.dist(pos_stored, pos) < pcbnew.FromMM(0.1): #0.1mm以下の距離には複数のビアを配置しない
-                return #すでに登録された座標のどれかと距離が近すぎるので新しく登録せずに終了
+    def AppendPosition(self, pos_list, pos): #座標リストに座標を追加する関数 リストの座標のいずれかと距離がごく近いものは追加されない 円弧と直線の接続部にビアが重なって生成されるのを防ぐが既に基板上にあるビアに対しては無力
+        if any(math.dist(pos_stored, pos) < pcbnew.FromMM(0.1) for pos_stored in pos_list): #0.1mm以下の距離には複数のビアを配置しない
+            return #すでに登録された座標のどれかと距離が近すぎるので新しく登録せずに終了
         pos_list.append(pos)
 
     def IsNum(self, s): #文字列が数値を表しているか

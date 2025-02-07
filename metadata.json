@@ -24,7 +24,7 @@
     ],
     "versions": [
         {
-            "version": "0.2.0",
+            "version": "0.3.0",
             "status": "development",
             "kicad_version": "8.0",
             "download_url": "https://github.com/takuhoTech/takuhoTech-KiCad-Plugins",

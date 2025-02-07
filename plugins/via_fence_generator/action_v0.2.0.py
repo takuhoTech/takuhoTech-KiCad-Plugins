@@ -59,12 +59,11 @@ class ViaFenceAction(pcbnew.ActionPlugin):
         except ValueError: #そもそも数値ではない
             return False
 
-    def ApplyButtonControl(self): #Applyボタンを押してもよい諸条件を記述
-        self.dlg.subsubSizer3Apply.Enable(all([
+    def OKButtonControl(self): #OKボタンを押してもよい諸条件を記述
+        self.dlg.subsubSizer3OK.Enable(all([
             self.dlg.lstStartLayer.GetSelection() != self.dlg.lstEndLayer.GetSelection(), #レイヤーが同じではない
             self.IsNum(self.dlg.txtTrackToViaClearance.GetValue()), #クリアランスが数字である クリアランスは0以下でもよい
-            self.IsViaSizeValid(self.dlg.txtViaDiameter.GetValue(), self.dlg.txtViaHole.GetValue()), #ビアサイズが有効な数値であるか
-            any(track.IsSelected() for track in self.board.GetTracks()) #いずれかの配線が選択されている
+            self.IsViaSizeValid(self.dlg.txtViaDiameter.GetValue(), self.dlg.txtViaHole.GetValue()) #ビアサイズが有効な数値であるか
         ]))
 
     #クリアランス入力補間に関わる割り込み関数------------------------------------------------------------------------------------------------------------
@@ -74,13 +73,13 @@ class ViaFenceAction(pcbnew.ActionPlugin):
             self.dlg.txtTrackToViaClearance.SetValue(str(pcbnew.ToMM(self.ZoneClearanceList[self.dlg.lstViaNet.GetSelection()])))
             self.chkUseZoneClearanceOnCheckBoxIsCalled = False
 
-        #self.ApplyButtonControl()
+        self.OKButtonControl()
 
     def txtTrackToViaClearanceOnText(self, event): #上の関数内のSetValueフラグが立っていないときチェックを外す
         if not self.chkUseZoneClearanceOnCheckBoxIsCalled:
             self.dlg.chkUseZoneClearance.SetValue(False)
 
-        #self.ApplyButtonControl()
+        self.OKButtonControl()
     #-------------------------------------------------------------------------------------------------------------------------------------------------
 
     #ビアサイズ入力補間に関わる割り込み関数--------------------------------------------------------------------------------------------------------------
@@ -91,13 +90,13 @@ class ViaFenceAction(pcbnew.ActionPlugin):
             self.dlg.txtViaHole.SetValue(str(pcbnew.ToMM(self.ViasDimensionsList[self.dlg.lstDefinedViaSizes.GetSelection() + 1].m_Drill)))
             self.lstDefinedViaSizesOnChoiceIsCalled = False
 
-        #self.ApplyButtonControl()
+        self.OKButtonControl()
 
     def txtViaSizesOnText(self, event): #上の関数内のSetValueフラグが立っていないとき定義済みビアサイズの選択を外す
         if not self.lstDefinedViaSizesOnChoiceIsCalled:
             self.dlg.lstDefinedViaSizes.SetSelection(wx.NOT_FOUND)
 
-        #self.ApplyButtonControl()
+        self.OKButtonControl()
     #-------------------------------------------------------------------------------------------------------------------------------------------------
 
     #レイヤーペアの判定と操作の関数(レイヤーペアが隣接していれば当然アニュラリングはAll copper layersに必要になる)--------------------------------------------
@@ -127,20 +126,20 @@ class ViaFenceAction(pcbnew.ActionPlugin):
     def lstViaTypeOnChoice(self, event):   #ビアタイプ変更時に呼ばれる割り込み関数
         self.checkViaTypeAndSetLayerPair()
 
-        #self.ApplyButtonControl()
+        self.OKButtonControl()
 
     def lstLayerPairOnChoice(self, event): #レイヤーペア変更時に呼ばれる割り込み関数
         self.checkViaLayerPairAdjacency()  #変更されたレイヤーペアの隣接判定とそれに伴う設定
 
-        #self.ApplyButtonControl()
+        self.OKButtonControl()
 
     def Run(self): #ツールバーアイコンが押された時に実行
         #ダイアログと基板のオブジェクトを作成----------------------------------------------------------------------------------------------------------------
         pcb_frame = next(
-            x for x in wx.GetTopLevelWindows() if x.GetName() == "PcbFrame" #親ウィンドウの設定
+            x for x in wx.GetTopLevelWindows() if x.GetName() == "PcbFrame"
         )
         self.dlg = Dialog(pcb_frame)
-        self.board = pcbnew.GetBoard()
+        board = pcbnew.GetBoard()
         #-------------------------------------------------------------------------------------------------------------------------------------------------
 
         #配線とビアのクリアランスの補間制御------------------------------------------------------------------------------------------------------------------
@@ -149,9 +148,9 @@ class ViaFenceAction(pcbnew.ActionPlugin):
         self.dlg.txtTrackToViaClearance.Bind(wx.EVT_TEXT, self.txtTrackToViaClearanceOnText)
         #-------------------------------------------------------------------------------------------------------------------------------------------------
 
-        #すべてのゾーンのネットを登録しクリアランスを取得-----------------------------------------------------------------------------------------------------
+        #すべてのゾーンのネットを登録しクリアランスを取得------------------------------------------------------------------------------------------
         self.ZoneClearanceList = []
-        for zone in self.board.Zones(): #登録されないネット無しゾーンにもindexがあるからここにindexつけるのは良くない
+        for zone in board.Zones(): #登録されないネット無しゾーンにもindexがあるからここにindexつけるのは良くない
             netname = zone.GetNetname()
             if netname != None and netname != "":  #ネット無しゾーンは登録しないしクリアランスの取得もしない
                 self.dlg.lstViaNet.Append(netname) #ネット名が同じゾーンは重複せずそれぞれ登録される
@@ -162,7 +161,7 @@ class ViaFenceAction(pcbnew.ActionPlugin):
         self.dlg.lstViaNet.Bind(wx.EVT_CHOICE, self.chkUseZoneClearanceOnCheckBox) #ネットが変わったときにクリアランスも更新 チェックが入った時と同じ操作なので関数も同じ
         '''
         #ゾーンのものに限らずすべてのネットを登録する場合
-        nets = self.board.GetNetsByName()
+        nets = board.GetNetsByName()
         for index, (_ , net) in enumerate(nets.items(), -1): #ダミーのネット(None?)が存在しているため実際に登録されるのはindex=0番から
             netname = net.GetNetname()
             if netname != None and netname != "":
@@ -173,7 +172,7 @@ class ViaFenceAction(pcbnew.ActionPlugin):
         #-------------------------------------------------------------------------------------------------------------------------------------------------
 
         #定義済みビアサイズリストの取得と登録と補間制御-------------------------------------------------------------------------------------------------------
-        self.ViasDimensionsList = self.board.GetViasDimensionsList()
+        self.ViasDimensionsList = board.GetViasDimensionsList()
         for index, ViaDimension in enumerate(self.ViasDimensionsList): #0個目(最初)のDiameterとDrillは0になるので登録されない
             if ViaDimension.m_Diameter != 0 and ViaDimension.m_Drill != 0:
                 self.dlg.lstDefinedViaSizes.Append(str(pcbnew.ToMM(ViaDimension.m_Diameter)) + " / " + str(pcbnew.ToMM(ViaDimension.m_Drill)))
@@ -188,9 +187,9 @@ class ViaFenceAction(pcbnew.ActionPlugin):
 
         #有効レイヤーの取得と登録---------------------------------------------------------------------------------------------------------------------------
         for LayerID in range(32): #IDが0から31のレイヤーのうち有効なものを登録
-            if self.board.IsLayerEnabled(LayerID):
-                self.dlg.lstStartLayer.Append(self.board.GetLayerName(LayerID))
-                self.dlg.lstEndLayer.Append(self.board.GetLayerName(LayerID))
+            if board.IsLayerEnabled(LayerID):
+                self.dlg.lstStartLayer.Append(board.GetLayerName(LayerID))
+                self.dlg.lstEndLayer.Append(board.GetLayerName(LayerID))
         #-------------------------------------------------------------------------------------------------------------------------------------------------
 
         #内層アニュラリングの選択肢を登録する----------------------------------------------------------------------------------------------------------------
@@ -215,132 +214,115 @@ class ViaFenceAction(pcbnew.ActionPlugin):
         self.dlg.lstEndLayer.Bind(wx.EVT_CHOICE, self.lstLayerPairOnChoice)
         #-------------------------------------------------------------------------------------------------------------------------------------------------
 
-        #self.ApplyButtonControl()
+        self.OKButtonControl()
+        if self.dlg.ShowModal() == wx.ID_OK: #ダイアログ表示中はdlg.ShowModal()は終了しない
+            #netの読み込み 選択していないとネット無しになるがエラーは無い
+            ViaNetName = self.dlg.lstViaNet.GetStringSelection()
 
-        self.dlg.subsubSizer3Apply.Bind(wx.EVT_BUTTON, self.subsubSizer3OnApplyButtonClick)
-        self.dlg.subsubSizer3Cancel.Bind(wx.EVT_BUTTON, self.subsubSizer3OnCancelButtonClick)
+            #ビアのネットの自動更新の有無 自動更新無しがTrue
+            ViaIsFree = not self.dlg.chkUpdateViaNet.IsChecked()
 
-        self.dlg.Show()
+            #ビアタイプ読み込み 何かしらが必ず選択されている
+            ViaTypeList = [pcbnew.VIATYPE_THROUGH,pcbnew.VIATYPE_MICROVIA, pcbnew.VIATYPE_BLIND_BURIED,pcbnew.VIATYPE_NOT_DEFINED]
+            ViaType = ViaTypeList[self.dlg.lstViaType.GetSelection()]
 
-        self.timer = wx.Timer(self.dlg)
-        self.dlg.Bind(wx.EVT_TIMER, self.OnTimer, self.timer)
-        self.timer.Start(50) #50ms
+            #配線とビアのクリアランスの読み込み--------------------------------------------------------------------------------------------------------------
+            if self.dlg.chkUseZoneClearance.IsChecked():
+                #Use zone clearanceにチェック時は導体ゾーンのクリアランスを使用
+                TrackToViaClearance = self.ZoneClearanceList[self.dlg.lstViaNet.GetSelection()]
+            else:
+                #無効時はテキストボックスから テキストボックスを編集するとチェックが外れる
+                TrackToViaClearance = pcbnew.FromMM(float(self.dlg.txtTrackToViaClearance.GetValue()))
+            #---------------------------------------------------------------------------------------------------------------------------------------------
 
-    def OnTimer(self, event):
-        self.ApplyButtonControl()
+            #ビアサイズの読み込み---------------------------------------------------------------------------------------------------------------------------
+            if self.dlg.lstDefinedViaSizes.GetSelection() != wx.NOT_FOUND:
+                #定義済みサイズが選択されているときはリストから 割り込みにより定義済みサイズが選択されると同時にテキストボックスにも同じサイズが書き込まれる
+                ViaDiameter = self.ViasDimensionsList[self.dlg.lstDefinedViaSizes.GetSelection() + 1].m_Diameter #テキストにも書き込まれているが変換されてるので元の値を使う
+                ViaDrill    = self.ViasDimensionsList[self.dlg.lstDefinedViaSizes.GetSelection() + 1].m_Drill
+            else:
+                #選択されていないときはテキストボックスから テキストボックスを編集すると選択が解除されてwx.NOT_FOUNDになる
+                ViaDiameter = pcbnew.FromMM(float(self.dlg.txtViaDiameter.GetValue()))
+                ViaDrill    = pcbnew.FromMM(float(self.dlg.txtViaHole.GetValue()))
+            #---------------------------------------------------------------------------------------------------------------------------------------------
 
-    def subsubSizer3OnCancelButtonClick(self, event):
-        self.timer.Stop()
+            #レイヤーペアの読み込み 何かしらが必ず選択されている-----------------------------------------------------------------------------------------------
+            ViaStartLayerID = board.GetLayerID(self.dlg.lstStartLayer.GetStringSelection()) #LayerIDを保持するのは大変なのでレイヤー名だけ保持してここでIDに変換
+            ViaEndLayerID   = board.GetLayerID(self.dlg.lstEndLayer.GetStringSelection())   #StartとEndのレイヤーの上下が逆の場合はKiCadが戻してくれる
+            #---------------------------------------------------------------------------------------------------------------------------------------------
+
+            #内層アニュラリングの除去の有無------------------------------------------------------------------------------------------------------------------
+            ViaRemoveUnconnectedAnnularRing = bool(self.dlg.lstAnnularRings.GetSelection()) #0=All copper layers=False, 1=True
+            #---------------------------------------------------------------------------------------------------------------------------------------------
+
+            #選択中の配線の取得とビアの配置------------------------------------------------------------------------------------------------------------------
+            ViaPositionList = []
+            selectedTrackList = [track for track in board.GetTracks() if track.IsSelected()]
+            for selectedTrack in selectedTrackList:
+                TrackStart = selectedTrack.GetStart()
+                TrackEnd = selectedTrack.GetEnd()
+                TrackWidth = selectedTrack.GetWidth()
+                TrackLength = selectedTrack.GetLength()
+
+                offset = TrackWidth//2 + ViaDiameter//2 + TrackToViaClearance #python3においては//で切り捨て除算
+
+                if selectedTrack.GetClass() == "PCB_TRACK":
+                    DX = TrackEnd.x - TrackStart.x #整数
+                    DY = TrackEnd.y - TrackStart.y
+                    sin = -DY/TrackLength #0to1
+                    cos = DX/TrackLength
+                    dx = int(offset*sin) #整数
+                    dy = int(offset*cos)
+
+                    ViaNum = 1 + int(TrackLength/ViaDiameter) #何故か//を使うとViaNumがfloatになり動作せず
+
+                    for step in range(ViaNum):
+                        if ViaNum == 1: #stepが0の場合のみ
+                            x_temp = TrackStart.x #ビアを1個しか置けなくても置く 1個だけ置かれてるのは見れば分かるのでエラーは出さない
+                            y_temp = TrackStart.y
+                        else: #配線が短くてViaが1個しか置けないとゼロ除算になるのを回避する
+                            x_temp = TrackStart.x + step * int(DX / (ViaNum - 1)) #+=を使う方法より分かりやすい
+                            y_temp = TrackStart.y + step * int(DY / (ViaNum - 1))
+
+                        self.AppendPosition(ViaPositionList, [x_temp - dx, y_temp - dy])
+                        self.AppendPosition(ViaPositionList, [x_temp + dx, y_temp + dy])
+
+                elif selectedTrack.GetClass() == "PCB_ARC":
+                    TrackCenter = selectedTrack.GetCenter() #回転中心
+                    TrackRadius = selectedTrack.GetRadius() #半径
+
+                    InnerRadius = TrackRadius - offset
+                    OuterRadius = TrackRadius + offset
+                    angle_d     = selectedTrack.GetAngle().AsRadians()
+                    angle_start = selectedTrack.GetArcAngleStart().AsRadians()
+
+                    if offset > TrackRadius: #円弧半径が小さすぎて内側にビアを置くとクリアランスが保てない場合
+                        InnerViaNum = 0 #内側にビアを置かない
+                    elif ViaDiameter**2 > 4*InnerRadius**2: #acosが範囲外エラーになる条件
+                        InnerViaNum = 1
+                    else:
+                        InnerViaNum = 1 + int(abs(angle_d)/math.acos(1 - ViaDiameter**2/(2*InnerRadius**2))) #何故か//を使うとViaNumがfloatになり動作せず
+
+                    OuterViaNum = 1 + int(abs(angle_d)/math.acos(1 - ViaDiameter**2/(2*OuterRadius**2))) #ここのangle_dは絶対値でないといけない
+
+                    #内側に置けない場合でも外側に置けるなら置く
+                    for step in range(InnerViaNum):
+                        if InnerViaNum == 1:
+                            angle_temp = angle_start
+                        else:
+                            angle_temp = angle_start + step * angle_d / (InnerViaNum - 1) #ここのangle_dは正負問わない
+
+                        self.AppendPosition(ViaPositionList, [TrackCenter.x + int(InnerRadius*math.cos(angle_temp)), TrackCenter.y + int(InnerRadius*math.sin(angle_temp))])
+                    for step in range(OuterViaNum):
+                        if OuterViaNum == 1:
+                            angle_temp = angle_start
+                        else:
+                            angle_temp = angle_start + step * angle_d / (OuterViaNum - 1)
+
+                        self.AppendPosition(ViaPositionList, [TrackCenter.x + int(OuterRadius*math.cos(angle_temp)), TrackCenter.y + int(OuterRadius*math.sin(angle_temp))])
+
+            for ViaPosition in ViaPositionList: #リストにある座標にビアを配置
+                self.CreateVia(board, ViaPosition, ViaDiameter, ViaDrill, ViaNetName, ViaIsFree, ViaType, ViaStartLayerID, ViaEndLayerID, ViaRemoveUnconnectedAnnularRing)
+            pcbnew.Refresh()
+
         self.dlg.Destroy()
-
-    def subsubSizer3OnApplyButtonClick(self, event):
-        #netの読み込み 選択していないとネット無しになるがエラーは無い
-        ViaNetName = self.dlg.lstViaNet.GetStringSelection()
-
-        #ビアのネットの自動更新の有無 自動更新無しがTrue
-        ViaIsFree = not self.dlg.chkUpdateViaNet.IsChecked()
-
-        #ビアタイプ読み込み 何かしらが必ず選択されている
-        ViaTypeList = [pcbnew.VIATYPE_THROUGH,pcbnew.VIATYPE_MICROVIA, pcbnew.VIATYPE_BLIND_BURIED,pcbnew.VIATYPE_NOT_DEFINED]
-        ViaType = ViaTypeList[self.dlg.lstViaType.GetSelection()]
-
-        #配線とビアのクリアランスの読み込み--------------------------------------------------------------------------------------------------------------
-        if self.dlg.chkUseZoneClearance.IsChecked():
-            #Use zone clearanceにチェック時は導体ゾーンのクリアランスを使用
-            TrackToViaClearance = self.ZoneClearanceList[self.dlg.lstViaNet.GetSelection()]
-        else:
-            #無効時はテキストボックスから テキストボックスを編集するとチェックが外れる
-            TrackToViaClearance = pcbnew.FromMM(float(self.dlg.txtTrackToViaClearance.GetValue()))
-        #---------------------------------------------------------------------------------------------------------------------------------------------
-
-        #ビアサイズの読み込み---------------------------------------------------------------------------------------------------------------------------
-        if self.dlg.lstDefinedViaSizes.GetSelection() != wx.NOT_FOUND:
-            #定義済みサイズが選択されているときはリストから 割り込みにより定義済みサイズが選択されると同時にテキストボックスにも同じサイズが書き込まれる
-            ViaDiameter = self.ViasDimensionsList[self.dlg.lstDefinedViaSizes.GetSelection() + 1].m_Diameter #テキストにも書き込まれているが変換されてるので元の値を使う
-            ViaDrill    = self.ViasDimensionsList[self.dlg.lstDefinedViaSizes.GetSelection() + 1].m_Drill
-        else:
-            #選択されていないときはテキストボックスから テキストボックスを編集すると選択が解除されてwx.NOT_FOUNDになる
-            ViaDiameter = pcbnew.FromMM(float(self.dlg.txtViaDiameter.GetValue()))
-            ViaDrill    = pcbnew.FromMM(float(self.dlg.txtViaHole.GetValue()))
-        #---------------------------------------------------------------------------------------------------------------------------------------------
-
-        #レイヤーペアの読み込み 何かしらが必ず選択されている-----------------------------------------------------------------------------------------------
-        ViaStartLayerID = self.board.GetLayerID(self.dlg.lstStartLayer.GetStringSelection()) #LayerIDを保持するのは大変なのでレイヤー名だけ保持してここでIDに変換
-        ViaEndLayerID   = self.board.GetLayerID(self.dlg.lstEndLayer.GetStringSelection())   #StartとEndのレイヤーの上下が逆の場合はKiCadが戻してくれる
-        #---------------------------------------------------------------------------------------------------------------------------------------------
-
-        #内層アニュラリングの除去の有無------------------------------------------------------------------------------------------------------------------
-        ViaRemoveUnconnectedAnnularRing = bool(self.dlg.lstAnnularRings.GetSelection()) #0=All copper layers=False, 1=True
-        #---------------------------------------------------------------------------------------------------------------------------------------------
-
-        #選択中の配線の取得とビアの配置------------------------------------------------------------------------------------------------------------------
-        ViaPositionList = [] #ダイアログを閉じないと一度配置した位置に再度置けないのは困るのでこれはApplyを押すたびに定義
-        selectedTrackList = [track for track in self.board.GetTracks() if track.IsSelected()]
-        for selectedTrack in selectedTrackList:
-            selectedTrack.ClearSelected() #選択状態を解除
-
-            TrackStart = selectedTrack.GetStart()
-            TrackEnd = selectedTrack.GetEnd()
-            TrackWidth = selectedTrack.GetWidth()
-            TrackLength = selectedTrack.GetLength()
-
-            offset = TrackWidth//2 + ViaDiameter//2 + TrackToViaClearance #python3においては//で切り捨て除算
-
-            if selectedTrack.GetClass() == "PCB_TRACK":
-                DX = TrackEnd.x - TrackStart.x #整数
-                DY = TrackEnd.y - TrackStart.y
-                sin = -DY/TrackLength #0to1
-                cos = DX/TrackLength
-                dx = int(offset*sin) #整数
-                dy = int(offset*cos)
-
-                ViaNum = 1 + int(TrackLength/ViaDiameter) #何故か//を使うとViaNumがfloatになり動作せず
-
-                for step in range(ViaNum):
-                    if ViaNum == 1: #stepが0の場合のみ
-                        x_temp = TrackStart.x #ビアを1個しか置けなくても置く 1個だけ置かれてるのは見れば分かるのでエラーは出さない
-                        y_temp = TrackStart.y
-                    else: #配線が短くてViaが1個しか置けないとゼロ除算になるのを回避する
-                        x_temp = TrackStart.x + step * int(DX / (ViaNum - 1)) #+=を使う方法より分かりやすい
-                        y_temp = TrackStart.y + step * int(DY / (ViaNum - 1))
-
-                    self.AppendPosition(ViaPositionList, [x_temp - dx, y_temp - dy])
-                    self.AppendPosition(ViaPositionList, [x_temp + dx, y_temp + dy])
-
-            elif selectedTrack.GetClass() == "PCB_ARC":
-                TrackCenter = selectedTrack.GetCenter() #回転中心
-                TrackRadius = selectedTrack.GetRadius() #半径
-
-                InnerRadius = TrackRadius - offset
-                OuterRadius = TrackRadius + offset
-                angle_d     = selectedTrack.GetAngle().AsRadians()
-                angle_start = selectedTrack.GetArcAngleStart().AsRadians()
-
-                if offset > TrackRadius: #円弧半径が小さすぎて内側にビアを置くとクリアランスが保てない場合
-                    InnerViaNum = 0 #内側にビアを置かない
-                elif ViaDiameter**2 > 4*InnerRadius**2: #acosが範囲外エラーになる条件
-                    InnerViaNum = 1
-                else:
-                    InnerViaNum = 1 + int(abs(angle_d)/math.acos(1 - ViaDiameter**2/(2*InnerRadius**2))) #何故か//を使うとViaNumがfloatになり動作せず
-
-                OuterViaNum = 1 + int(abs(angle_d)/math.acos(1 - ViaDiameter**2/(2*OuterRadius**2))) #ここのangle_dは絶対値でないといけない
-
-                #内側に置けない場合でも外側に置けるなら置く
-                for step in range(InnerViaNum):
-                    if InnerViaNum == 1:
-                        angle_temp = angle_start
-                    else:
-                        angle_temp = angle_start + step * angle_d / (InnerViaNum - 1) #ここのangle_dは正負問わない
-
-                    self.AppendPosition(ViaPositionList, [TrackCenter.x + int(InnerRadius*math.cos(angle_temp)), TrackCenter.y + int(InnerRadius*math.sin(angle_temp))])
-                for step in range(OuterViaNum):
-                    if OuterViaNum == 1:
-                        angle_temp = angle_start
-                    else:
-                        angle_temp = angle_start + step * angle_d / (OuterViaNum - 1)
-
-                    self.AppendPosition(ViaPositionList, [TrackCenter.x + int(OuterRadius*math.cos(angle_temp)), TrackCenter.y + int(OuterRadius*math.sin(angle_temp))])
-
-        for ViaPosition in ViaPositionList: #リストにある座標にビアを配置
-            self.CreateVia(self.board, ViaPosition, ViaDiameter, ViaDrill, ViaNetName, ViaIsFree, ViaType, ViaStartLayerID, ViaEndLayerID, ViaRemoveUnconnectedAnnularRing)
-        pcbnew.Refresh()

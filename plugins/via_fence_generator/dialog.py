@@ -152,8 +152,8 @@ class Dialog ( wx.Dialog ):
         subSizer3.Add( ( 0, 0), 1, wx.EXPAND, 5 )
 
         subsubSizer3 = wx.StdDialogButtonSizer()
-        self.subsubSizer3OK = wx.Button( self, wx.ID_OK )
-        subsubSizer3.AddButton( self.subsubSizer3OK )
+        self.subsubSizer3Apply = wx.Button( self, wx.ID_APPLY )
+        subsubSizer3.AddButton( self.subsubSizer3Apply )
         self.subsubSizer3Cancel = wx.Button( self, wx.ID_CANCEL )
         subsubSizer3.AddButton( self.subsubSizer3Cancel )
         subsubSizer3.Realize()
@@ -181,8 +181,8 @@ class Dialog ( wx.Dialog ):
         self.txtViaHole.Bind( wx.EVT_TEXT, self.txtViaHoleOnText )
         self.lstEndLayer.Bind( wx.EVT_CHOICE, self.lstEndLayerOnChoice )
         self.lstAnnularRings.Bind( wx.EVT_CHOICE, self.lstAnnularRingsOnChoice )
+        self.subsubSizer3Apply.Bind( wx.EVT_BUTTON, self.subsubSizer3OnApplyButtonClick )
         self.subsubSizer3Cancel.Bind( wx.EVT_BUTTON, self.subsubSizer3OnCancelButtonClick )
-        self.subsubSizer3OK.Bind( wx.EVT_BUTTON, self.subsubSizer3OnOKButtonClick )
 
     def __del__( self ):
         pass
@@ -222,10 +222,10 @@ class Dialog ( wx.Dialog ):
     def lstAnnularRingsOnChoice( self, event ):
         event.Skip()
 
-    def subsubSizer3OnCancelButtonClick( self, event ):
+    def subsubSizer3OnApplyButtonClick( self, event ):
         event.Skip()
 
-    def subsubSizer3OnOKButtonClick( self, event ):
+    def subsubSizer3OnCancelButtonClick( self, event ):
         event.Skip()
 
 

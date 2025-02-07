@@ -21,6 +21,8 @@ KiCad 8.0で開発を行っています.
 
 配線とビアのクリアランスの自動補間が可能です.
 
+![Image](https://github.com/user-attachments/assets/13164859-8306-42ad-b2c1-e3e4a141d07d)
+
 ## How to install
 
 KiCadの「プラグイン&コンテンツマネージャー」の「ファイルからインストール」でReleaseからダウンロードしたzipファイルを選択することでインストールが可能です.

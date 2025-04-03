@@ -1,15 +1,15 @@
 # takuhoTech-KiCad-Plugins
 takuhoTech's KiCad Plugins
 
-KiCad 8.0で開発を行っています.
+KiCad 9.0で開発を行っています.
 
-## SquareTrackGenerator
+## Square Track Generator
 
 選択中の配線をいい感じにポリゴンに置き換えるプラグインです.
 
 パッドからはみ出している配線の先を引っ込ませることができます.
 
-## ViaFenceGenerator
+## Via Fence Generator
 
 選択中の配線の横にビアを並べるプラグインです.
 
@@ -22,6 +22,10 @@ KiCad 8.0で開発を行っています.
 配線とビアのクリアランスの自動補間が可能です.
 
 ![Image](https://github.com/user-attachments/assets/13164859-8306-42ad-b2c1-e3e4a141d07d)
+
+## Grid Origin Aligner
+
+選択したパッドの位置にグリッド原点を配置するプラグインです.
 
 ## How to install
 

@@ -2,7 +2,7 @@
     "$schema": "https://go.kicad.org/pcm/schemas/v1",
     "name": "takuhoTech-KiCad-Plugins",
     "description": "A suite of kicad pcbnew Tools",
-    "description_full": "Square Track Generator, Via Fence Generator",
+    "description_full": "Square Track Generator, Via Fence Generator, Grid Origin Aligner",
     "identifier": "com.github.takuhotech.takuhotech-kicad-plugins",
     "type": "plugin",
     "author": {
@@ -20,13 +20,15 @@
         "pcbnew",
         "rf",
         "track",
-        "fencing"
+        "fencing",
+        "grid",
+        "origin"
     ],
     "versions": [
         {
-            "version": "0.3.0",
+            "version": "0.4.0",
             "status": "development",
-            "kicad_version": "8.0",
+            "kicad_version": "9.0",
             "download_url": "https://github.com/takuhoTech/takuhoTech-KiCad-Plugins",
             "platforms": [
                 "windows"

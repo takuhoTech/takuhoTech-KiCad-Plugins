@@ -186,11 +186,24 @@ class ViaFenceAction(pcbnew.ActionPlugin):
         self.dlg.txtViaHole.Bind(wx.EVT_TEXT, self.txtViaSizesOnText)
         #-------------------------------------------------------------------------------------------------------------------------------------------------
 
-        #有効レイヤーの取得と登録---------------------------------------------------------------------------------------------------------------------------
-        for LayerID in range(32): #IDが0から31のレイヤーのうち有効なものを登録
+        #有効レイヤーの取得と登録(8.0以前)------------------------------------------------------------------------------------------------------------------
+        '''
+        for LayerID in range(32): #IDが0から31のレイヤーのうち有効なものを登録(初めの32層は全て導体レイヤー)
             if self.board.IsLayerEnabled(LayerID):
                 self.dlg.lstStartLayer.Append(self.board.GetLayerName(LayerID))
                 self.dlg.lstEndLayer.Append(self.board.GetLayerName(LayerID))
+        '''
+        #-------------------------------------------------------------------------------------------------------------------------------------------------
+
+        #有効レイヤーの取得と登録(9.0に対応)-----------------------------------------------------------------------------------------------------------------
+        copper_layers = [LayerID for LayerID in range(pcbnew.PCB_LAYER_ID_COUNT) if self.board.IsLayerEnabled(LayerID) and pcbnew.IsCopperLayer(LayerID)] #有効な導体レイヤーのIDのリストを取得 pcbnew.PCB_LAYER_ID_COUNTは128になるはず
+
+        inner_layers = [LayerID for LayerID in copper_layers if LayerID not in (pcbnew.F_Cu, pcbnew.B_Cu)] #上記リストからF.CuとB.CuのIDを除外
+
+        for LayerID in [pcbnew.F_Cu] + inner_layers + [pcbnew.B_Cu]:
+            LayerName = self.board.GetLayerName(LayerID)
+            self.dlg.lstStartLayer.Append(LayerName)
+            self.dlg.lstEndLayer.Append(LayerName)
         #-------------------------------------------------------------------------------------------------------------------------------------------------
 
         #内層アニュラリングの選択肢を登録する----------------------------------------------------------------------------------------------------------------

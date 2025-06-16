@@ -9,6 +9,8 @@ KiCad 9.0で開発を行っています.
 
 パッドからはみ出している配線の先を引っ込ませることができます.
 
+![Image](https://github.com/user-attachments/assets/b31da635-eab1-48e8-92c6-8c81ea13aed4)
+
 ## Via Fence Generator
 
 選択中の配線の横にビアを並べるプラグインです.

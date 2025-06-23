@@ -29,7 +29,9 @@ KiCad 9.0で開発を行っています.
 
 ## Grid Origin Aligner
 
-選択したパッドの位置にグリッド原点を配置するプラグインです.
+選択したパッドの位置にグリッド原点を配置するだけの,単純ですが汎用性の高いプラグインです.
+
+![Image](https://github.com/user-attachments/assets/429ec465-eec4-4df5-8df2-699743b77e91)
 
 ## How to install
 
